@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+    salary-manager-backend:
+        build: ./backend
+        volumes:
+            - ./backend/django_project:/django_project
+        ports:
+            - 8000:8000
+        image: salary-manager-backend:django_project
+        command: python manage.py runserver 0:8000
+    salary-manager-db:
+        image: postgres
+        volumes: ./data/db:/var/lib/postgres/data

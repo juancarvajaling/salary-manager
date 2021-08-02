@@ -9,7 +9,9 @@ ENV PYTHONUNBUFFERED=1
 
 COPY requirements.txt ./
 RUN pip install --upgrade pip \
-    && pip install -r requirements.txt
+    && pip install -r requirements.txt \
+    && apt update \
+    && apt -y install netcat
 
 WORKDIR /django_project
 

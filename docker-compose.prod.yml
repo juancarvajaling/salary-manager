@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  api:
+    restart: always
+    command: uvicorn main:app --host 0.0.0.0
+    expose:
+      - 8000
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.app-http.rule=Host(`ec2-3-144-92-185.us-east-2.compute.amazonaws.com`)
+      - traefik.http.routers.app-http.tls=true
+      - traefik.http.routers.app-http.tls.certresolver=letsencrypt
+
+  traefik:
+    image: traefik:v2.5
+    ports:
+      - 80:80
+      - 443:443
+    restart: always
+    volumes:
+      - ./traefik/traefik.toml:/etc/traefik/traefik.toml
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-public-certificates:/certificates
+
+volumes:
+  traefik-public-certificates:

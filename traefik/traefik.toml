@@ -20,4 +20,4 @@
     email = "juancarvajaling@gmail.com"
     storage= "acme.json"
     [certificatesResolvers.letsencrypt.acme.httpChallenge]
-        entryPoint = "api"
+        entryPoint = "web"

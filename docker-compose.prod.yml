@@ -9,9 +9,9 @@ services:
       - 80
     labels:
       - traefik.enable=true
-      - traefik.http.routers.app-http.rule=Host(`ec2-18-119-100-54.us-east-2.compute.amazonaws.com`)
-      - traefik.http.routers.app-http.tls=true
-      - traefik.http.routers.app-http.tls.certresolver=letsencrypt
+      - traefik.http.routers.fastapi.rule=Host(`ec2-18-119-100-54.us-east-2.compute.amazonaws.com`)
+      - traefik.http.routers.fastapi.tls=true
+      - traefik.http.routers.fastapi.tls.certresolver=letsencrypt
 
   traefik:
     build:

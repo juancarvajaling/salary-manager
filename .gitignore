@@ -133,3 +133,5 @@ dmypy.json
 .vscode/
 
 *.csv
+
+traefik-public-certificates/

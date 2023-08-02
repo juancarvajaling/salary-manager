@@ -2,15 +2,13 @@ version: "3.9"
 
 services:
   api:
-    build:
-      context: ./backend/
-      dockerfile: Dockerfile
-    image: salary-manager:api
+    build: ./backend/
+    image: salary-manager:app
     volumes:
-      - ./backend/api:/api/
+      - ./backend/app:/app/
     expose:
-      - 80
-    # command: uvicorn main:app --host 0.0.0.0 --reload
+      - 8000
+    command: uvicorn main:app --host 0.0.0.0 --reload
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.fastapi.rule=Host(`fastapi.localhost`)"

@@ -33,6 +33,6 @@ async def calculate_salary_post(request: Request, upload_file: UploadFile = File
     processed_salary = process_salary(days_data, employee_data)
 
     headers = {
-        'Content-Disposition': 'attachment; filename="horas.xlsx"'
+        'Content-Disposition': 'attachment; filename="nomina.xlsx"'
     }
     return StreamingResponse(processed_salary, headers=headers)

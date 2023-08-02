@@ -1,4 +1,4 @@
-FROM python:3.11.1-slim
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.11-slim
 
 LABEL mainteiner="juancarvajaling@gmail.com"
 

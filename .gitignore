@@ -135,3 +135,5 @@ dmypy.json
 *.csv
 
 traefik-public-certificates/
+
+.DS_Store

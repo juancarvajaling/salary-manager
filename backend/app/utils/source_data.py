@@ -10,6 +10,9 @@ def read_employee_data(salary_file: BytesIO) -> dict:
 
     employee_data = {}
     for row in ws[f'A{ws.min_row + 1}:C{ws.max_row}']:
+        if row[0].value is None or row[1].value is None or row[2].value is None:
+            continue
+
         # To know the existing employees
         employee_data[row[0].value] = {
             'id': row[0].value, 'name': row[1].value,
@@ -44,6 +47,9 @@ def read_days_data(salary_file: BytesIO, employee_data: dict) -> tuple:
     days_data = []
     row_num = 1
     for row in ws[f'A{ws.min_row + 1}:C{ws.max_row}']:
+        if row[0].value is None or row[1].value is None or row[2].value is None:
+            continue
+
         row_num += 1
         if row[0].value not in employee_data.keys():
             errors.append(f'Fila {row_num}: La cédula no pertenece a ningún empleado')

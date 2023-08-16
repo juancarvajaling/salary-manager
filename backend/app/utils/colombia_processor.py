@@ -23,7 +23,8 @@ class ColombiaSalary:
         self.EXTRA_HOLIDAY_DAY = config.getfloat('extra', 'holiday_day')
         self.EXTRA_HOLIDAY_NIGHT = config.getfloat('extra', 'holiday_night')
         self.SATURDAY = config.getint('work', 'saturday')
-        self.NIGHT = config.getint('work', 'night')
+        self.DAY_START = config.getint('work', 'day_start')
+        self.DAY_END = config.getint('work', 'day_end')
         self.WORKING_MINS = config.getint('work', 'working_mins')
         self.ADDITIONAL_HOURS = config.getint('work', 'additional_hours')
         self.ADDITIONAL_MINS = config.getint('work', 'additional_mins')
@@ -143,7 +144,7 @@ class ColombiaSalary:
         week_day = a_date.weekday() == self.SATURDAY or Colombia().is_working_day(a_date)
         type_day = 'week_day' if week_day else 'holiday'
 
-        type_time = 'day' if a_date.hour < self.NIGHT else 'night'
+        type_time = 'day' if self.DAY_START < a_date.hour < self.DAY_END else 'night'
 
         return self.working_time_map[type_hour][type_day][type_time]
 

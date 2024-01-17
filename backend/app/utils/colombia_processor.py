@@ -144,7 +144,7 @@ class ColombiaSalary:
         week_day = a_date.weekday() == self.SATURDAY or Colombia().is_working_day(a_date)
         type_day = 'week_day' if week_day else 'holiday'
 
-        type_time = 'day' if self.DAY_START < a_date.hour < self.DAY_END else 'night'
+        type_time = 'day' if self.DAY_START <= a_date.hour < self.DAY_END else 'night'
 
         return self.working_time_map[type_hour][type_day][type_time]
 

@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "salary-manager"
+version = "0.1.0"
+description = "Application to calculate worker salaries"
+authors = ["juancarvajaling <juancarvajaling@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+openpyxl = "^3.1.2"
+workalendar = "^17.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

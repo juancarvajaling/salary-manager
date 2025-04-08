@@ -141,3 +141,6 @@ traefik-public-certificates/
 # Files to just make tests
 *.zip
 *.xlsx
+
+util_files/
+.aws-sam/

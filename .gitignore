@@ -137,3 +137,10 @@ dmypy.json
 traefik-public-certificates/
 
 .DS_Store
+
+# Files to just make tests
+*.zip
+*.xlsx
+
+util_files/
+.aws-sam/

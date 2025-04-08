@@ -1,6 +1,0 @@
-fastapi
-Jinja2
-openpyxl
-python-multipart
-uvicorn
-workalendar

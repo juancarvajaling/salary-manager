@@ -1,0 +1,158 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Salary Manager Application
+
+Resources:
+  # S3 Bucket for static website files
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-website-bucket
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  # Bucket policy to allow access only from API Gateway
+  WebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebsiteBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub ${WebsiteBucket.Arn}/*
+            Condition:
+              StringEquals:
+                aws:SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SalaryManagerApi}/*
+
+  # Lambda Function
+  SalaryManagerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./salary_manager
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.12
+      Timeout: 30
+      MemorySize: 256
+
+  # API Gateway
+  SalaryManagerApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: '''GET,POST'''
+        AllowHeaders: '''Content-Type'''
+        AllowOrigin: '''*'''
+      DefinitionBody:
+        swagger: '2.0'
+        info:
+          title: !Ref AWS::StackName
+        paths:
+          /{file}:
+            get:
+              produces:
+                - application/json
+              parameters:
+                - name: file
+                  in: path
+                  required: true
+                  type: string
+              responses:
+                "200":
+                  description: "200 response"
+                  schema:
+                    $ref: '#/definitions/Empty'
+              x-amazon-apigateway-integration:
+                type: aws
+                credentials: !GetAtt ApiGatewayS3Role.Arn
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:s3:path/${WebsiteBucket}/{file}
+                httpMethod: GET
+                responses:
+                  default:
+                    statusCode: '200'
+                requestParameters:
+                  integration.request.path.file: method.request.path.file
+                passsThroughBehavior: when_no_match
+          /:
+            get:
+              produces:
+                - text/html
+                - application/json
+              responses:
+                "200":
+                  description: "200 response"
+                  schema:
+                    $ref: '#/definitions/Empty'
+              x-amazon-apigateway-integration:
+                type: aws
+                credentials: !GetAtt ApiGatewayS3Role.Arn
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:s3:path/${WebsiteBucket}/index.html
+                httpMethod: GET
+                responses:
+                  default:
+                    statusCode: '200'
+                passsThroughBehavior: when_no_match
+          /calculate-salary:
+            post:
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: "200 response"
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                credentials: !GetAtt ApiGatewayS3Role.Arn
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SalaryManagerFunction.Arn}/invocations
+                httpMethod: POST
+                responses:
+                  default:
+                    statusCode: '200'
+                passsThroughBehavior: when_no_match
+                contentHandling: CONVERT_TO_TEXT
+        x-amazon-apigateway-binary-media-types:
+          - '*/*'
+
+  # IAM Role for API Gateway to access S3
+  ApiGatewayS3Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub ${WebsiteBucket.Arn}/*
+        - PolicyName: LambdaInvokePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt SalaryManagerFunction.Arn
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub https://${SalaryManagerApi}.execute-api.${AWS::Region}.amazonaws.com/prod/

@@ -1,0 +1,29 @@
+services:
+  # SAM Local runs on host machine (not in container)
+  # This avoids Docker-in-Docker complexity while maintaining single source of truth
+
+  # Simple static file server (for S3 simulation)
+  static:
+    build: .
+    container_name: salary-manager-static
+    volumes:
+      - ./web_site:/workspace/web_site:ro  # Read-only mount of web files
+    networks:
+      - salary-manager-network
+
+  # Nginx reverse proxy (simulates API Gateway routing)
+  gateway:
+    image: nginx:alpine
+    container_name: salary-manager-gateway
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8000:80"  # Single endpoint like production API Gateway
+    depends_on:
+      - static
+    networks:
+      - salary-manager-network
+
+networks:
+  salary-manager-network:
+    driver: bridge 

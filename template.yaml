@@ -156,3 +156,8 @@ Outputs:
   ApiEndpoint:
     Description: API Gateway endpoint URL
     Value: !Sub https://${SalaryManagerApi}.execute-api.${AWS::Region}.amazonaws.com/prod/
+  
+  # If you set up a custom domain, use this instead:
+  # CustomDomainEndpoint:
+  #   Description: Custom domain endpoint URL (requires domain setup)
+  #   Value: https://api.yourdomain.com/

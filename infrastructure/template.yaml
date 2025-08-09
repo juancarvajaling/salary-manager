@@ -39,7 +39,7 @@ Resources:
   SalaryManagerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./salary_manager
+      CodeUri: ../backend
       Handler: lambda_function.lambda_handler
       Runtime: python3.12
       Timeout: 30

@@ -29,7 +29,7 @@ echo "✅ Docker and Docker Compose are installed"
 
 # Build the development container
 echo "🔨 Building development container..."
-docker-compose build
+docker-compose -f docker/docker-compose.yml build
 
 echo "✅ Development container built successfully"
 

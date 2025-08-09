@@ -31,41 +31,43 @@ This document explains how to set up the **production-parity development environ
 
 ```bash
 # Build the development containers
-docker-compose build
+docker-compose -f docker/docker-compose.yml build
 
 # Terminal 1: Start containers (frontend + routing)
-docker-compose up gateway static
+docker-compose -f docker/docker-compose.yml up gateway static
 
 # Terminal 2: Start SAM Local on host (Lambda functions)
-sam build && sam local start-api --port 3000 --host 0.0.0.0
+sam build -t infrastructure/template.yaml && sam local start-api --port 3000 --host 0.0.0.0 --profile my-own --region us-east-1
 ```
 
 > **⚠️ Important**: Both options maintain **production parity** by using the nginx gateway to route requests exactly like AWS API Gateway does in production. This ensures your development environment mirrors your production architecture perfectly.
 
 ## Development Workflow
 
+> **📝 Important SAM Local Note**: Always run `sam build -t infrastructure/template.yaml` before starting `sam local start-api`. The build step installs Python dependencies (openpyxl, workalendar) that are required for the Lambda function to work. The start-api command should **NOT** use the `-t` flag to ensure it uses the built version with dependencies.
+
 ### Available Services
 
 | Service | Port | Purpose | URL |
 |---------|------|---------|-----|
 | `gateway` | 8000 | **Main App** - Nginx reverse proxy (simulates API Gateway) | **http://localhost:8000** |
-| SAM Local (host) | 3000 | Real SAM Local API (reads template.yaml) | http://localhost:3000 |
+| SAM Local (host) | 3000 | Real SAM Local API with dependencies | http://localhost:3000 |
 | `static` | 8080 | Static file server (simulates S3) | http://localhost:8080 |
 
 ### Starting Services
 
 ```bash
 # Start all services (recommended)
-docker-compose up
+docker-compose -f docker/docker-compose.yml up
 
 # Start containers (frontend + routing)
-docker-compose up gateway static
+docker-compose -f docker/docker-compose.yml up gateway static
 
 # In separate terminal: Start SAM Local on host
-sam build && sam local start-api --port 3000
+sam build -t infrastructure/template.yaml && sam local start-api --port 3000 --profile my-own --region us-east-1
 
 # Start only the frontend
-docker-compose up static
+docker-compose -f docker/docker-compose.yml up static
 
 # For development tools, use host machine directly
 poetry shell  # Activate Python environment
@@ -95,17 +97,17 @@ poetry shell  # Activate Python environment
 **📝 Development Workflow:**
 
 1. **Frontend Development**:
-   - Edit files in `web_site/` directory
+   - Edit files in `frontend/` directory
    - Changes are reflected immediately at http://localhost:8000
 
 2. **Backend Development**:
-   - Edit Python files in `salary_manager/` directory  
-   - Edit `template.yaml` for infrastructure changes
+   - Edit Python files in `backend/` directory  
+   - Edit `infrastructure/template.yaml` for infrastructure changes
    - SAM Local automatically reloads when files change
    - Check `sam-local.log` for detailed Lambda logs
 
 3. **Single Source of Truth**:
-   - ✅ Only `template.yaml` defines your architecture
+   - ✅ Only `infrastructure/template.yaml` defines your architecture
    - ✅ No separate development configuration to maintain
    - ✅ Guaranteed production parity
    - ✅ Automatic sync with infrastructure changes
@@ -116,23 +118,23 @@ All development happens on your **host machine**:
 
 ```bash
 # SAM Local operations
-sam build                    # Build Lambda function
-sam validate                 # Validate template.yaml
+sam build -t infrastructure/template.yaml  # Build Lambda function
+sam validate -t infrastructure/template.yaml  # Validate template
 sam local invoke SalaryManagerFunction  # Test function directly
 
 # Python development (host machine)
 poetry add <package-name>    # Add Python dependencies
 poetry run pytest           # Run tests (if you have them)
-poetry run black salary_manager/  # Format code
-poetry run flake8 salary_manager/ # Lint code
+poetry run black backend/  # Format code
+poetry run flake8 backend/ # Lint code
 
 # Direct Lambda testing
-python salary_manager/lambda_function.py  # Test Lambda locally
+python backend/lambda_function.py  # Test Lambda locally
 
 # Container management
-docker-compose up gateway static -d  # Start services
-docker-compose logs -f              # Monitor logs
-docker-compose down                  # Stop services
+docker-compose -f docker/docker-compose.yml up gateway static -d  # Start services
+docker-compose -f docker/docker-compose.yml logs -f              # Monitor logs
+docker-compose -f docker/docker-compose.yml down                  # Stop services
 ```
 
 **📝 Development Notes:**
@@ -141,19 +143,27 @@ docker-compose down                  # Stop services
 - ✅ **SAM Local on host**: Direct Lambda execution without Docker-in-Docker
 - ✅ **Native tooling**: Use your preferred IDE and tools directly
 
-## File Structure in Container
+## File Structure
 
 ```
-/workspace/
-├── salary_manager/          # Lambda function code
+salary-manager/
+├── backend/                 # Lambda function code
 │   ├── lambda_function.py   # Main handler
 │   ├── requirements.txt     # Lambda dependencies
 │   └── utils/              # Utility modules
-├── web_site/               # Frontend files
+├── frontend/               # Frontend files
 │   ├── index.html
 │   └── script.js
-├── template.yaml           # SAM template
-└── docker-compose.yml      # Container orchestration
+├── infrastructure/         # AWS CloudFormation/SAM
+│   ├── template.yaml       # SAM template
+│   └── samconfig.toml      # SAM configuration
+├── docker/                 # Container configurations
+│   ├── docker-compose.yml  # Container orchestration
+│   ├── Dockerfile          # Static server image
+│   └── nginx.conf          # Reverse proxy config
+├── docs/                   # Documentation
+├── scripts/                # Development tools
+└── .vscode/               # Editor settings
 ```
 
 ## Development Tips
@@ -165,28 +175,25 @@ docker-compose down                  # Stop services
 ### 2. Debugging
 ```bash
 # View all container logs
-docker-compose logs
+docker-compose -f docker/docker-compose.yml logs
 
 # View gateway logs (nginx reverse proxy)
-docker-compose logs gateway
+docker-compose -f docker/docker-compose.yml logs gateway
 
 # View static server logs
-docker-compose logs static
+docker-compose -f docker/docker-compose.yml logs static
 
 # View SAM Local logs (Lambda execution)
 tail -f sam-local.log
 
-# Interactive debugging
-docker-compose exec dev bash
-
 # Real-time log monitoring (automatic with start-dev.sh)
-docker-compose logs -f gateway static
+docker-compose -f docker/docker-compose.yml logs -f gateway static
 ```
 
 ### 3. AWS Configuration
-- AWS credentials are mounted from `~/.aws/` (if exists)
-- Default region is set to `us-east-2` (matching your SAM config)
-- For local development, AWS credentials are optional
+- Uses the "my-own" AWS profile with your credentials
+- Default region is set to `us-east-1` for SAM Local
+- Profile-based authentication avoids SSO token issues
 
 ### 4. Adding Dependencies
 
@@ -196,7 +203,7 @@ docker-compose logs -f gateway static
 poetry add <package-name>
 
 # Update requirements.txt for Lambda
-poetry export --without-hashes --format=requirements.txt > salary_manager/requirements.txt
+poetry export --without-hashes --format=requirements.txt > backend/requirements.txt
 ```
 
 ## Testing Excel File Processing
@@ -207,7 +214,7 @@ To test the salary calculation functionality:
    - **"empleados"** sheet: columns A (ID), B (Name), C (Salary)
    - **"horas"** sheet: columns A (Employee ID), B (Date), C (Hours)
 
-2. Upload through the web interface at http://localhost:8080
+2. Upload through the web interface at http://localhost:8000
 
 3. The application will process the file and return a salary calculation
 
@@ -226,17 +233,17 @@ lsof -i :8080  # Static server
 pkill -f "sam local start-api"
 
 # Stop Docker containers
-docker-compose down
+docker-compose -f docker/docker-compose.yml down
 ```
 
 **🐳 Container issues:**
 ```bash
 # Clean rebuild
-docker-compose down
-docker-compose build --no-cache
+docker-compose -f docker/docker-compose.yml down
+docker-compose -f docker/docker-compose.yml build --no-cache
 
 # Remove orphaned containers
-docker-compose down --remove-orphans
+docker-compose -f docker/docker-compose.yml down --remove-orphans
 ```
 
 **🔧 SAM Local issues:**
@@ -246,7 +253,7 @@ tail -f sam-local.log
 
 # Restart SAM Local manually
 pkill -f "sam local start-api"
-sam build && sam local start-api --port 3000 --host 0.0.0.0
+sam build -t infrastructure/template.yaml && sam local start-api --port 3000 --host 0.0.0.0 --profile my-own --region us-east-1
 
 # Check if SAM Local is responding
 curl http://localhost:3000/calculate-salary -X OPTIONS
@@ -266,7 +273,7 @@ aws sts get-caller-identity
 # Reset Python environment
 poetry env remove python
 poetry install --no-root
-pip install -r salary_manager/requirements.txt
+pip install -r backend/requirements.txt
 ```
 
 ## VS Code Setup (Host-Based)
@@ -302,7 +309,7 @@ To test deployment without actually deploying:
 
 ```bash
 # Validate your template (should always pass)
-sam validate
+sam validate -t infrastructure/template.yaml
 
 # Package for deployment (dry run - requires S3 bucket)
 sam package --s3-bucket your-deployment-bucket --output-template-file packaged.yaml

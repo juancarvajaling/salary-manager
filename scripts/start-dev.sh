@@ -40,7 +40,7 @@ echo ""
 
 # Start containers in background
 echo "🐳 Starting Docker containers (gateway + static)..."
-docker-compose up gateway static -d
+docker-compose -f docker/docker-compose.yml up gateway static -d
 
 if [ $? -ne 0 ]; then
     echo "❌ Failed to start Docker containers"
@@ -57,12 +57,12 @@ else
     echo "🔧 Starting SAM Local..."
     echo "   Building SAM project..."
     
-    if sam build; then
+    if sam build -t infrastructure/template.yaml; then
         echo "✅ SAM build successful"
         echo "🚀 Starting SAM Local API..."
         
         # Start SAM Local in background
-        nohup sam local start-api --port 3000 --host 0.0.0.0 > sam-local.log 2>&1 &
+        nohup sam local start-api --port 3000 --host 0.0.0.0 --profile my-own --region us-east-1 > sam-local.log 2>&1 &
         SAM_PID=$!
         
         # Wait a moment for SAM Local to start
@@ -106,4 +106,4 @@ echo "Press Ctrl+C to stop all services"
 # Keep the script running and show logs
 echo ""
 echo "📊 Monitoring container logs (Ctrl+C to stop):"
-docker-compose logs -f gateway static 
+docker-compose -f docker/docker-compose.yml logs -f gateway static 

@@ -4,10 +4,12 @@ services:
 
   # Simple static file server (for S3 simulation)
   static:
-    build: .
+    build: 
+      context: ..
+      dockerfile: docker/Dockerfile
     container_name: salary-manager-static
     volumes:
-      - ./web_site:/workspace/web_site:ro  # Read-only mount of web files
+      - ../frontend:/workspace/frontend:ro  # Read-only mount of web files
     networks:
       - salary-manager-network
 

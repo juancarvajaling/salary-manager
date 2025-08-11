@@ -20,22 +20,19 @@
           <div class="card">
             <div class="card-body">
               <h3 class="card-title text-center mb-3">Calculador de Nomina</h3>
-              <form class="row justify-content-around mb-3" method="post" enctype="multipart/form-data">
+              <form class="row justify-content-around mb-3" method="post" action="/prod/calculate-salary" enctype="multipart/form-data">
                 <div class="col-8">
-                  <input class="form-control" type="file" id="upload_file" name="upload_file">
+                  <input class="form-control" type="file" id="input_file" name="upload_file">
                 </div>
                 <div class="col-auto">
-                  <button type="submit" class="btn btn-primary">Procesar Archivo</button>
+                  <button id="submit_file" type="submit" class="btn btn-primary">Procesar Archivo</button>
                 </div>
               </form>
-              {% if errors %}
-                <h6>Ocurrieron los siguientes errores</h6>
-                <ul>
-                  {% for error in errors %}
-                    <li>{{ error }}</li>
-                  {% endfor %}
-                </ul>
-              {% endif %}
+              <div class="container">
+                <div class="row">
+                  <section id="errors"></section>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -47,5 +44,6 @@
       integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
       crossorigin="anonymous"
     ></script>
+    <script src="./script.js"></script>
   </body>
 </html>

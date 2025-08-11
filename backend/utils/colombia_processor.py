@@ -25,9 +25,16 @@ class ColombiaSalary:
         self.SATURDAY = config.getint('work', 'saturday')
         self.DAY_START = config.getint('work', 'day_start')
         self.DAY_END = config.getint('work', 'day_end')
-        self.WORKING_MINS = config.getint('work', 'working_mins')
-        self.ADDITIONAL_HOURS = config.getint('work', 'additional_hours')
-        self.ADDITIONAL_MINS = config.getint('work', 'additional_mins')
+        self.DAY_WORKING_MINS = config.getint('work', 'working_mins')
+        self.MONTH_WORKING_MINS = self.__get_month_working_mins(self.DAY_WORKING_MINS)
+        # Assuming 2 rest days
+        self.ADDITIONAL_MINS = self.DAY_WORKING_MINS * 2
+
+    @staticmethod
+    def __get_month_working_mins(day_working_mins: int):
+        # Assuming 6 working days a week and 5 weeks in a month
+        # 6 days a week * 5 weeks = 30 days
+        return day_working_mins * 6 * 5
 
     def __set_working_time_map(self):
         self.working_time_map = {
@@ -139,7 +146,7 @@ class ColombiaSalary:
         return type_hour_data_names
 
     def __get_working_time(self, a_date: datetime, num_mins: int) -> dict:
-        type_hour = 'normal_hours' if num_mins <= self.WORKING_MINS else 'extra_hours'
+        type_hour = 'normal_hours' if num_mins <= self.DAY_WORKING_MINS else 'extra_hours'
 
         week_day = a_date.weekday() == self.SATURDAY or Colombia().is_working_day(a_date)
         type_day = 'week_day' if week_day else 'holiday'
@@ -154,7 +161,8 @@ class ColombiaSalary:
             employee_id = day['id']
             employee = employee_data.get(employee_id)
             # get the salary base per minute
-            value_minute = employee['salary_base'] / 240 / 60
+
+            value_minute = employee['salary_base'] / self.MONTH_WORKING_MINS
             start_on: datetime = day['start_on']
             end_on: datetime = day['end_on']
             num_mins = 1
